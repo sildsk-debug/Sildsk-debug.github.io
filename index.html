@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitTracker 💪</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: #21262d;
+    --border2: #30363d;
+    --text: #e8e8f0;
+    --muted: #8b949e;
+    --green: #00ff87;
+    --red: #ff6b6b;
+    --blue: #60a5fa;
+    --yellow: #fbbf24;
+    --purple: #a78bfa;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 48px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 20px 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 1.3em; font-weight: 700; letter-spacing: -0.5px; }
+  .header .subtitle { font-size: 0.73em; color: var(--muted); margin-top: 2px; }
+
+  /* TABS */
+  .tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 10px 14px; background: none; border: none;
+    color: var(--muted); border-bottom: 2px solid transparent;
+    cursor: pointer; font-size: 0.8em; font-weight: 400;
+    white-space: nowrap; transition: color 0.15s;
+    font-family: inherit;
+  }
+  .tab-btn.active { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+
+  /* MAIN */
+  .main { padding: 20px 16px; max-width: 800px; margin: 0 auto; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* FORM ROW */
+  .form-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; flex: 1; min-width: 130px; }
+  .form-group label { font-size: 0.73em; color: var(--muted); margin-bottom: 4px; }
+  .form-group input[type="date"],
+  .form-group input[type="text"] {
+    background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--text); border-radius: 8px; padding: 8px 12px;
+    font-size: 0.9em; font-family: inherit; outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus { border-color: var(--green); }
+
+  /* SECTION */
+  .section-title {
+    font-weight: 600; color: var(--muted); font-size: 0.75em;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .section { margin-bottom: 20px; }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+  }
+  .grid-cell {
+    background: var(--bg2); border-radius: 8px;
+    padding: 10px 12px; border: 1px solid var(--border);
+    transition: border-color 0.15s;
+  }
+  .grid-cell:focus-within { border-color: var(--green); }
+  .grid-cell label { font-size: 0.7em; color: var(--muted); display: block; margin-bottom: 4px; }
+  .grid-cell input {
+    width: 100%; background: transparent; border: none;
+    color: var(--text); font-size: 1.05em; font-weight: 600;
+    outline: none; font-family: inherit;
+  }
+  .grid-cell input::placeholder { color: var(--border2); }
+  .goal-input { color: var(--yellow) !important; }
+
+  /* BUTTONS */
+  .btn-primary {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, var(--green), #00d4ff);
+    color: #0a0a0f; border: none; border-radius: 10px;
+    font-weight: 700; font-size: 1em; cursor: pointer;
+    font-family: inherit; letter-spacing: 0.5px; transition: opacity 0.15s;
+    margin-top: 6px;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary.success { background: var(--green); }
+  .btn-goal {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, var(--yellow), #f59e0b);
+    color: #0a0a0f; border: none; border-radius: 10px;
+    font-weight: 700; font-size: 1em; cursor: pointer;
+    font-family: inherit; margin-top: 6px; transition: opacity 0.15s;
+  }
+  .btn-goal:hover { opacity: 0.9; }
+  .btn-sm {
+    padding: 7px 13px; border-radius: 6px; border: none;
+    font-size: 0.8em; cursor: pointer; font-family: inherit;
+    font-weight: 500; transition: opacity 0.15s;
+  }
+  .btn-sm:hover { opacity: 0.85; }
+  .btn-export { background: var(--green); color: #0a0a0f; font-weight: 700; }
+  .btn-import { background: var(--border2); color: var(--text); }
+  .btn-csv { background: var(--bg3); color: var(--blue); border: 1px solid var(--border2) !important; }
+  .btn-del { background: transparent; color: var(--red); border: 1px solid rgba(255,107,107,0.3) !important; }
+  .btn-del-confirm { background: var(--red); color: #fff; }
+  .btn-cancel { background: var(--border2); color: var(--text); }
+
+  /* CHIP SELECTOR */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .chip {
+    padding: 5px 12px; border-radius: 6px; font-size: 0.78em;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .chip.active {
+    background: var(--bg3); color: var(--green);
+    border-color: var(--green);
+  }
+
+  /* STAT PILLS */
+  .pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill {
+    background: var(--bg2); border-radius: 8px;
+    padding: 8px 14px; border: 1px solid transparent;
+  }
+  .pill .pill-label { font-size: 0.68em; color: var(--muted); margin-bottom: 2px; }
+  .pill .pill-val { font-weight: 700; font-size: 0.9em; }
+
+  /* CHART BOX */
+  .chart-box {
+    background: var(--bg2); border-radius: 12px;
+    padding: 16px 10px; border: 1px solid var(--border);
+  }
+  .chart-title { font-weight: 600; font-size: 0.88em; margin-bottom: 12px; padding-left: 4px; }
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* HISTORY */
+  .entry-card {
+    background: var(--bg2); border-radius: 10px;
+    padding: 14px; margin-bottom: 10px; border: 1px solid var(--border);
+  }
+  .entry-header {
+    display: flex; justify-content: space-between;
+    align-items: flex-start; margin-bottom: 8px; gap: 8px;
+  }
+  .entry-date { font-weight: 700; color: var(--green); font-size: 0.92em; }
+  .entry-note { font-size: 0.75em; color: var(--muted); margin-top: 2px; }
+  .entry-vals { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .entry-val { font-size: 0.76em; color: var(--muted); }
+  .entry-val span { color: #c9d1d9; }
+  .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  /* EXPORT BOX */
+  .export-box {
+    margin-top: 22px; background: var(--bg2); border-radius: 10px;
+    padding: 16px; border: 1px solid var(--border);
+  }
+  .export-title { font-weight: 600; margin-bottom: 12px; font-size: 0.92em; }
+  .export-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* DELTA */
+  .delta-up { color: var(--green); font-size: 0.82em; margin-left: 4px; }
+  .delta-down { color: var(--red); font-size: 0.82em; margin-left: 4px; }
+  .delta-up.inv { color: var(--red); }
+  .delta-down.inv { color: var(--green); }
+
+  /* HIDDEN FILE INPUT */
+  .file-label { display: inline-block; }
+  .file-label input { display: none; }
+
+  @media (max-width: 480px) {
+    .main { padding: 16px 12px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">💪</div>
+    <div>
+      <h1>FitTracker</h1>
+      <div class="subtitle" id="subtitle">0 entrée · stockage local</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">📋 Saisir</button>
+    <button class="tab-btn" onclick="switchTab(1)">📊 Graphiques</button>
+    <button class="tab-btn" onclick="switchTab(2)">📅 Historique</button>
+    <button class="tab-btn" onclick="switchTab(3)">🎯 Objectifs</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- TAB 0: SAISIR -->
+  <div class="panel active" id="panel-0">
+    <div class="form-row">
+      <div class="form-group" style="flex:1;min-width:130px">
+        <label>Date</label>
+        <input type="date" id="input-date">
+      </div>
+      <div class="form-group" style="flex:2;min-width:180px">
+        <label>Note (optionnel)</label>
+        <input type="text" id="input-note" placeholder="Ex: Prise de masse semaine 3…">
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">📏 Mensurations</div>
+      <div class="grid" id="grid-saisir"></div>
+    </div>
+    <button class="btn-primary" id="btn-save" onclick="saveEntry()">💾 Enregistrer cette entrée</button>
+  </div>
+
+  <!-- TAB 1: GRAPHIQUES -->
+  <div class="panel" id="panel-1">
+    <div class="chips" id="chips-metrics"></div>
+    <div class="pills" id="stat-pills"></div>
+    <div class="chart-box" id="chart-box">
+      <div class="chart-title" id="chart-title"></div>
+      <div class="chart-wrap"><canvas id="myChart"></canvas></div>
+    </div>
+    <div class="empty" id="chart-empty" style="display:none">
+      <div class="empty-icon">📈</div>
+      <p id="chart-empty-msg">Aucune donnée pour cette métrique</p>
+    </div>
+  </div>
+
+  <!-- TAB 2: HISTORIQUE -->
+  <div class="panel" id="panel-2">
+    <div id="history-list"></div>
+  </div>
+
+  <!-- TAB 3: OBJECTIFS -->
+  <div class="panel" id="panel-3">
+    <p style="color:var(--muted);font-size:0.85em;margin-bottom:16px">
+      Définis tes objectifs — ils apparaîtront dans les graphiques pour visualiser ta progression.
+    </p>
+    <div class="section">
+      <div class="section-title">🎯 Objectifs mensurations</div>
+      <div class="grid" id="grid-goals"></div>
+    </div>
+    <button class="btn-goal" id="btn-save-goals" onclick="saveGoals()">🎯 Sauvegarder les objectifs</button>
+
+    <div class="export-box">
+      <div class="export-title">📤 Export / Import</div>
+      <div class="export-btns">
+        <button class="btn-sm btn-export" onclick="exportJSON()">⬇️ Exporter JSON</button>
+        <label class="file-label btn-sm btn-import" style="padding:7px 13px;cursor:pointer">
+          ⬆️ Importer JSON
+          <input type="file" accept=".json" onchange="importJSON(event)">
+        </label>
+        <button class="btn-sm btn-csv" onclick="exportCSV()">📊 Exporter CSV</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STORAGE_KEY = 'fittracker_v2';
+
+const MEASUREMENTS = [
+  { key:'poids',       label:'Poids',        unit:'kg',  icon:'⚖️' },
+  { key:'poitrine',    label:'Poitrine',      unit:'cm',  icon:'📏' },
+  { key:'taille',      label:'Taille',        unit:'cm',  icon:'📏' },
+  { key:'hanches',     label:'Hanches',       unit:'cm',  icon:'📏' },
+  { key:'epaules',     label:'Épaules',       unit:'cm',  icon:'🏋️' },
+  { key:'bras_g',      label:'Bras G',        unit:'cm',  icon:'💪' },
+  { key:'bras_d',      label:'Bras D',        unit:'cm',  icon:'💪' },
+  { key:'avantbras_g', label:'Avant-bras G',  unit:'cm',  icon:'💪' },
+  { key:'avantbras_d', label:'Avant-bras D',  unit:'cm',  icon:'💪' },
+  { key:'cuisse_g',    label:'Cuisse G',      unit:'cm',  icon:'🦵' },
+  { key:'cuisse_d',    label:'Cuisse D',      unit:'cm',  icon:'🦵' },
+  { key:'mollet_g',    label:'Mollet G',      unit:'cm',  icon:'🦵' },
+  { key:'mollet_d',    label:'Mollet D',      unit:'cm',  icon:'🦵' },
+  { key:'cou',         label:'Cou',           unit:'cm',  icon:'📏' },
+];
+
+const INVERT = ['taille']; // métriques où baisser = bien
+
+// ── STATE ──────────────────────────────────────────────
+let db = load();
+let activeTab = 0;
+let chartMetric = 'poids';
+let chartInstance = null;
+let pendingDelete = null;
+
+// ── PERSISTENCE ────────────────────────────────────────
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { entries: [], goals: {} };
+  } catch { return { entries: [], goals: {} }; }
+}
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+}
+
+// ── HELPERS ────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function fmtDate(d) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function deltaHTML(val, unit, key) {
+  if (val === null || isNaN(val)) return '';
+  const inv = INVERT.includes(key);
+  const up = val > 0;
+  const good = inv ? !up : up;
+  const cls = (up ? 'delta-up' : 'delta-down') + (inv ? ' inv' : '');
+  const arrow = up ? '▲' : '▼';
+  return `<span class="${cls}">${arrow} ${Math.abs(val).toFixed(1)}${unit}</span>`;
+}
+
+// ── TABS ───────────────────────────────────────────────
+function switchTab(i) {
+  activeTab = i;
+  document.querySelectorAll('.tab-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+  document.querySelectorAll('.panel').forEach((p, j) => p.classList.toggle('active', i === j));
+  if (i === 1) renderChart();
+  if (i === 2) renderHistory();
+  updateSubtitle();
+}
+
+function updateSubtitle() {
+  const n = db.entries.length;
+  document.getElementById('subtitle').textContent = `${n} entrée${n !== 1 ? 's' : ''} · stockage local`;
+}
+
+// ── TAB 0: SAISIR ──────────────────────────────────────
+function buildSaisirGrid() {
+  const grid = document.getElementById('grid-saisir');
+  grid.innerHTML = '';
+  MEASUREMENTS.forEach(m => {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    cell.innerHTML = `
+      <label>${m.icon} ${m.label} (${m.unit})</label>
+      <input type="number" step="0.1" placeholder="—" id="f-${m.key}">
+    `;
+    grid.appendChild(cell);
+  });
+}
+
+function saveEntry() {
+  const date = document.getElementById('input-date').value || today();
+  const note = document.getElementById('input-note').value.trim();
+  const entry = { id: Date.now(), date, note };
+  let hasVal = false;
+  MEASUREMENTS.forEach(m => {
+    const v = document.getElementById('f-' + m.key).value;
+    if (v !== '') { entry[m.key] = parseFloat(v); hasVal = true; }
+  });
+  if (!hasVal) { alert('Entre au moins une mesure !'); return; }
+
+  // Si entrée même date → confirmation
+  const existing = db.entries.findIndex(e => e.date === date);
+  if (existing !== -1) {
+    if (!confirm('Une entrée existe déjà pour cette date. La remplacer ?')) return;
+    db.entries.splice(existing, 1);
+  }
+
+  db.entries.push(entry);
+  db.entries.sort((a, b) => b.date.localeCompare(a.date));
+  persist();
+
+  // Reset form
+  MEASUREMENTS.forEach(m => { document.getElementById('f-' + m.key).value = ''; });
+  document.getElementById('input-note').value = '';
+
+  // Feedback
+  const btn = document.getElementById('btn-save');
+  btn.textContent = '✅ Sauvegardé !';
+  btn.classList.add('success');
+  setTimeout(() => { btn.textContent = '💾 Enregistrer cette entrée'; btn.classList.remove('success'); }, 2000);
+  updateSubtitle();
+}
+
+// ── TAB 1: GRAPHIQUES ──────────────────────────────────
+function buildChips() {
+  const container = document.getElementById('chips-metrics');
+  container.innerHTML = '';
+  MEASUREMENTS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (m.key === chartMetric ? ' active' : '');
+    btn.textContent = m.icon + ' ' + m.label;
+    btn.onclick = () => { chartMetric = m.key; buildChips(); renderChart(); };
+    container.appendChild(btn);
+  });
+}
+
+function renderChart() {
+  buildChips();
+  const m = MEASUREMENTS.find(x => x.key === chartMetric);
+
+  const points = db.entries
+    .filter(e => e[chartMetric] !== undefined)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(e => ({ x: fmtDate(e.date), y: e[chartMetric] }));
+
+  // Stat pills
+  const sorted = db.entries.filter(e => e[chartMetric] !== undefined).sort((a, b) => b.date.localeCompare(a.date));
+  const latest = sorted[0] ? sorted[0][chartMetric] : null;
+  const prev   = sorted[1] ? sorted[1][chartMetric] : null;
+  const delta  = (latest !== null && prev !== null) ? latest - prev : null;
+  const goal   = db.goals[chartMetric] !== undefined ? parseFloat(db.goals[chartMetric]) : null;
+
+  const pills = document.getElementById('stat-pills');
+  pills.innerHTML = '';
+  if (latest !== null) {
+    pills.innerHTML += pill('Dernier', `${latest} ${m.unit}`, 'var(--green)');
+    if (delta !== null) pills.innerHTML += pill('Évolution', deltaHTML(delta, m.unit, chartMetric), 'var(--blue)');
+    if (goal !== null)  pills.innerHTML += pill('Objectif', `${goal} ${m.unit}`, 'var(--yellow)');
+    if (goal !== null)  pills.innerHTML += pill('Écart obj.', deltaHTML(latest - goal, m.unit, chartMetric), 'var(--purple)');
+  }
+
+  // Chart
+  const box = document.getElementById('chart-box');
+  const empty = document.getElementById('chart-empty');
+  if (points.length < 2) {
+    box.style.display = 'none';
+    empty.style.display = 'block';
+    document.getElementById('chart-empty-msg').textContent =
+      points.length === 1 ? 'Au moins 2 entrées requises pour voir l\'évolution' : 'Aucune donnée pour cette métrique';
+    return;
+  }
+  box.style.display = 'block';
+  empty.style.display = 'none';
+
+  document.getElementById('chart-title').textContent = `${m.icon} ${m.label} (${m.unit})`;
+
+  if (chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('myChart').getContext('2d');
+  const datasets = [{
+    label: m.label,
+    data: points.map(p => p.y),
+    borderColor: '#00ff87',
+    backgroundColor: 'rgba(0,255,135,0.08)',
+    borderWidth: 2.5,
+    pointBackgroundColor: '#00ff87',
+    pointRadius: 4,
+    pointHoverRadius: 6,
+    tension: 0.35,
+    fill: true,
+  }];
+
+  // Ligne objectif
+  if (goal !== null) {
+    datasets.push({
+      label: 'Objectif',
+      data: points.map(() => goal),
+      borderColor: '#fbbf24',
+      borderWidth: 1.5,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      tension: 0,
+      fill: false,
+    });
+  }
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels: points.map(p => p.x), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: goal !== null, labels: { color: '#8b949e', font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: '#1c2128', borderColor: '#30363d', borderWidth: 1,
+          titleColor: '#e8e8f0', bodyColor: '#00ff87',
+          callbacks: { label: ctx => ` ${ctx.parsed.y} ${m.unit}` }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } }
+      }
+    }
+  });
+}
+
+function pill(label, valHTML, color) {
+  return `<div class="pill" style="border-color:${color}44">
+    <div class="pill-label">${label}</div>
+    <div class="pill-val" style="color:${color}">${valHTML}</div>
+  </div>`;
+}
+
+// ── TAB 2: HISTORIQUE ──────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (db.entries.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>Aucune entrée pour l'instant</p></div>`;
+    return;
+  }
+  list.innerHTML = db.entries.map(e => entryCard(e)).join('');
+}
+
+function entryCard(e) {
+  const vals = MEASUREMENTS.filter(m => e[m.key] !== undefined)
+    .map(m => `<span class="entry-val"><span>${m.label}:</span> ${e[m.key]} ${m.unit}</span>`).join('');
+  const actions = pendingDelete === e.id
+    ? `<div class="entry-actions">
+        <button class="btn-sm btn-del-confirm" onclick="confirmDelete(${e.id})">Supprimer</button>
+        <button class="btn-sm btn-cancel" onclick="cancelDelete()">Annuler</button>
+       </div>`
+    : `<button class="btn-sm btn-del" onclick="askDelete(${e.id})">🗑</button>`;
+
+  return `<div class="entry-card" id="card-${e.id}">
+    <div class="entry-header">
+      <div>
+        <div class="entry-date">${fmtDate(e.date)}</div>
+        ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
+      </div>
+      ${actions}
+    </div>
+    <div class="entry-vals">${vals || '<span style="color:var(--muted);font-size:0.78em">Aucune mesure</span>'}</div>
+  </div>`;
+}
+
+function askDelete(id) { pendingDelete = id; renderHistory(); }
+function cancelDelete() { pendingDelete = null; renderHistory(); }
+function confirmDelete(id) {
+  db.entries = db.entries.filter(e => e.id !== id);
+  persist(); pendingDelete = null;
+  renderHistory(); updateSubtitle();
+}
+
+// ── TAB 3: OBJECTIFS ───────────────────────────────────
+function buildGoalsGrid() {
+  const grid = document.getElementById('grid-goals');
+  grid.innerHTML = '';
+  MEASUREMENTS.forEach(m => {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell';
+    cell.innerHTML = `
+      <label>${m.icon} ${m.label} (${m.unit})</label>
+      <input class="goal-input" type="number" step="0.1" placeholder="—" id="g-${m.key}" value="${db.goals[m.key] !== undefined ? db.goals[m.key] : ''}">
+    `;
+    grid.appendChild(cell);
+  });
+}
+
+function saveGoals() {
+  MEASUREMENTS.forEach(m => {
+    const v = document.getElementById('g-' + m.key).value;
+    if (v !== '') db.goals[m.key] = parseFloat(v);
+    else delete db.goals[m.key];
+  });
+  persist();
+  const btn = document.getElementById('btn-save-goals');
+  btn.textContent = '✅ Objectifs sauvegardés !';
+  setTimeout(() => { btn.textContent = '🎯 Sauvegarder les objectifs'; }, 1800);
+}
+
+// ── EXPORT / IMPORT ────────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fittracker_backup_${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (!d.entries) throw new Error();
+      db = d;
+      persist();
+      buildGoalsGrid();
+      updateSubtitle();
+      alert(`✅ Import réussi ! ${db.entries.length} entrée(s) chargée(s).`);
+    } catch { alert('❌ Fichier invalide.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportCSV() {
+  const headers = ['date', 'note', ...MEASUREMENTS.map(m => m.key)];
+  const rows = db.entries.map(e => headers.map(h => e[h] !== undefined ? e[h] : '').join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fittracker_${today()}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── INIT ───────────────────────────────────────────────
+document.getElementById('input-date').value = today();
+buildSaisirGrid();
+buildGoalsGrid();
+buildChips();
+updateSubtitle();
+</script>
+</body>
+</html>
