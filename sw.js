@@ -1,4 +1,4 @@
-const CACHE = 'fittracker-v4';
+const CACHE = 'fittracker-v5';
 
 const REMINDER_OFFSET_DAYS = { daily: 1, weekly: 7, monthly: 30 };
 let reminderTimer = null;

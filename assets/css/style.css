@@ -149,12 +149,12 @@ body::before {
 
 /* BOTTOM TABBAR (mobile) */
 .tabbar {
+  display: none;
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 100;
-  display: flex;
   gap: 4px;
   background: rgba(7, 11, 15, 0.85);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
@@ -180,10 +180,6 @@ body::before {
 }
 
 @media (min-width: 601px) {
-  .tabbar {
-    display: none;
-  }
-
   body {
     padding-bottom: 48px;
   }
@@ -192,6 +188,10 @@ body::before {
 @media (max-width: 600px) {
   .tabs {
     display: none;
+  }
+
+  .tabbar {
+    display: flex;
   }
 }
 
