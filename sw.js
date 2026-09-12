@@ -1,4 +1,4 @@
-const CACHE = 'fittracker-v2';
+const CACHE = 'fittracker-v3';
 
 const PRECACHE = [
   './',

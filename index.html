@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Suivi de mensurations fitness : poids, poitrine, bras, cuisses… Stocké localement, 100% hors ligne.">
-  <meta name="theme-color" content="#0a0a0f">
+  <meta name="theme-color" content="#070b0f">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png">
-  <title>FitTracker 💪</title>
+  <title>FitTracker</title>
   <script defer src="vendor/chart.umd.min.js"></script>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -23,13 +23,13 @@
 
   <div class="header">
     <div class="header-top">
-      <div class="logo">💪</div>
+      <div class="logo" aria-hidden="true">FT</div>
       <div>
         <h1>FitTracker</h1>
         <div class="subtitle" id="subtitle">0 entrée · stockage local</div>
       </div>
     </div>
-    <div class="tabs">
+    <div class="tabs" id="top-tabs">
       <button class="tab-btn active" onclick="switchTab(0)">📋 Saisir</button>
       <button class="tab-btn" onclick="switchTab(1)">📊 Graphiques</button>
       <button class="tab-btn" onclick="switchTab(2)">🎯 Objectifs</button>
@@ -51,10 +51,7 @@
           <input type="text" id="input-note" placeholder="Ex: Prise de masse semaine 3…">
         </div>
       </div>
-      <div class="section">
-        <div class="section-title">📏 Mensurations</div>
-        <div class="grid" id="grid-saisir"></div>
-      </div>
+      <div id="grid-saisir"></div>
       <button class="btn-primary" id="btn-save" onclick="saveEntry()">💾 Enregistrer cette entrée</button>
     </div>
 
@@ -72,23 +69,19 @@
       </div>
     </div>
 
-
     <!-- TAB 2: OBJECTIFS -->
     <div class="panel" id="panel-2">
-      <p style="color:var(--muted);font-size:0.85em;margin-bottom:16px">
+      <p class="hint">
         Définis tes objectifs — ils apparaîtront dans les graphiques pour visualiser ta progression.
       </p>
-      <div class="section">
-        <div class="section-title">🎯 Objectifs mensurations</div>
-        <div class="grid" id="grid-goals"></div>
-      </div>
+      <div id="grid-goals"></div>
       <button class="btn-goal" id="btn-save-goals" onclick="saveGoals()">🎯 Sauvegarder les objectifs</button>
 
       <div class="export-box">
         <div class="export-title">📤 Export / Import</div>
         <div class="export-btns">
           <button class="btn-sm btn-export" onclick="exportJSON()">⬇️ Exporter JSON</button>
-          <label class="file-label btn-sm btn-import" style="padding:7px 13px;cursor:pointer">
+          <label class="btn-sm btn-import file-label" style="padding:8px 14px;cursor:pointer">
             ⬆️ Importer JSON
             <input type="file" accept=".json" onchange="importJSON(event)">
           </label>
@@ -102,6 +95,13 @@
       <div id="history-list"></div>
     </div>
   </div>
+
+  <nav class="tabbar" aria-label="Navigation principale">
+    <button class="tab-btn active" onclick="switchTab(0)"><span class="tbi">📋</span><span class="tbl">Saisir</span></button>
+    <button class="tab-btn" onclick="switchTab(1)"><span class="tbi">📊</span><span class="tbl">Graphiques</span></button>
+    <button class="tab-btn" onclick="switchTab(2)"><span class="tbi">🎯</span><span class="tbl">Objectifs</span></button>
+    <button class="tab-btn" onclick="switchTab(3)"><span class="tbi">📅</span><span class="tbl">Historique</span></button>
+  </nav>
 
   <script src="assets/js/app.js"></script>
 </body>

@@ -20,6 +20,13 @@ const MEASUREMENTS = [
 
 const INVERT = ['taille']; // métriques où baisser = bien
 
+const MEASUREMENT_GROUPS = [
+  { title: 'Poids', icon: '⚖️', keys: ['poids'] },
+  { title: 'Tronc', icon: '🧍', keys: ['poitrine', 'taille', 'hanches', 'epaules', 'cou'] },
+  { title: 'Bras', icon: '💪', keys: ['bras_g', 'bras_d', 'avantbras_g', 'avantbras_d'] },
+  { title: 'Jambes', icon: '🦵', keys: ['cuisse_g', 'cuisse_d', 'mollet_g', 'mollet_d'] },
+];
+
 // ── STATE ──────────────────────────────────────────────
 let db = load();
 let activeTab = 0;
@@ -73,16 +80,19 @@ function updateSubtitle() {
 // ── TAB 0: SAISIR ──────────────────────────────────────
 function buildSaisirGrid() {
   const grid = document.getElementById('grid-saisir');
-  grid.innerHTML = '';
-  MEASUREMENTS.forEach(m => {
-    const cell = document.createElement('div');
-    cell.className = 'grid-cell';
-    cell.innerHTML = `
-  <label>${m.icon} ${m.label} (${m.unit})</label>
-  <input type="number" step="0.1" placeholder="—" id="f-${m.key}">
-`;
-    grid.appendChild(cell);
-  });
+  grid.innerHTML = MEASUREMENT_GROUPS.map(g => `
+    <div class="segment">
+      <div class="segment-title">${g.icon} ${g.title}</div>
+      <div class="grid">
+        ${g.keys.map(k => {
+          const m = MEASUREMENTS.find(x => x.key === k);
+          return `<div class="grid-cell">
+              <label>${m.icon} ${m.label} <span class="unit">${m.unit}</span></label>
+              <input type="number" step="0.1" placeholder="—" id="f-${k}">
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
 }
 
 function saveEntry() {
@@ -177,10 +187,10 @@ function renderChart() {
   const datasets = [{
     label: m.label,
     data: points.map(p => p.y),
-    borderColor: '#00ff87',
-    backgroundColor: 'rgba(0,255,135,0.08)',
+    borderColor: '#34d399',
+    backgroundColor: 'rgba(52,211,153,0.12)',
     borderWidth: 2.5,
-    pointBackgroundColor: '#00ff87',
+    pointBackgroundColor: '#34d399',
     pointRadius: 4,
     pointHoverRadius: 6,
     tension: 0.35,
@@ -192,7 +202,7 @@ function renderChart() {
     datasets.push({
       label: 'Objectif',
       data: points.map(() => goal),
-      borderColor: '#fbbf24',
+      borderColor: '#f6c453',
       borderWidth: 1.5,
       borderDash: [6, 4],
       pointRadius: 0,
@@ -207,16 +217,16 @@ function renderChart() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: goal !== null, labels: { color: '#8b949e', font: { size: 11 } } },
+        legend: { display: goal !== null, labels: { color: '#8aa09d', font: { size: 11 } } },
         tooltip: {
-          backgroundColor: '#1c2128', borderColor: '#30363d', borderWidth: 1,
-          titleColor: '#e8e8f0', bodyColor: '#00ff87',
+          backgroundColor: '#0e1620', borderColor: 'rgba(255,255,255,0.14)', borderWidth: 1,
+          titleColor: '#e9f2ee', bodyColor: '#34d399',
           callbacks: { label: ctx => ` ${ctx.parsed.y} ${m.unit}` }
         }
       },
       scales: {
-        x: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } }
+        x: { ticks: { color: '#8aa09d', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.07)' } },
+        y: { ticks: { color: '#8aa09d', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.07)' } }
       }
     }
   });
@@ -272,16 +282,20 @@ function confirmDelete(id) {
 // ── TAB 3: OBJECTIFS ───────────────────────────────────
 function buildGoalsGrid() {
   const grid = document.getElementById('grid-goals');
-  grid.innerHTML = '';
-  MEASUREMENTS.forEach(m => {
-    const cell = document.createElement('div');
-    cell.className = 'grid-cell';
-    cell.innerHTML = `
-  <label>${m.icon} ${m.label} (${m.unit})</label>
-  <input class="goal-input" type="number" step="0.1" placeholder="—" id="g-${m.key}" value="${db.goals[m.key] !== undefined ? db.goals[m.key] : ''}">
-`;
-    grid.appendChild(cell);
-  });
+  grid.innerHTML = MEASUREMENT_GROUPS.map(g => `
+    <div class="segment">
+      <div class="segment-title">${g.icon} ${g.title}</div>
+      <div class="grid">
+        ${g.keys.map(k => {
+          const m = MEASUREMENTS.find(x => x.key === k);
+          const val = db.goals[k] !== undefined ? db.goals[k] : '';
+          return `<div class="grid-cell">
+              <label>${m.icon} ${m.label} <span class="unit">${m.unit}</span></label>
+              <input class="goal-input" type="number" step="0.1" placeholder="—" id="g-${k}" value="${val}">
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
 }
 
 function saveGoals() {

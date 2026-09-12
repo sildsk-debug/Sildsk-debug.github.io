@@ -16,53 +16,39 @@ function New-Icon {
   $bmp = [System.Drawing.Bitmap]::new($Size, $Size, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
   $g = [System.Drawing.Graphics]::FromImage($bmp)
   $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+  $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
   $g.Clear([System.Drawing.Color]::Transparent)
 
-  # Dégradé vert -> bleu (diagonal)
+  # Dégradé teal -> bleu (diagonal), assorti au thème
   $rect = [System.Drawing.Rectangle]::new(0, 0, $Size, $Size)
   $grad = [System.Drawing.Drawing2D.LinearGradientBrush]::new(
     $rect,
-    [System.Drawing.Color]::FromArgb(255, 0, 255, 135),   # #00ff87
-    [System.Drawing.Color]::FromArgb(255, 96, 165, 250),  # #60a5fa
+    [System.Drawing.Color]::FromArgb(255, 52, 211, 153),   # #34d399
+    [System.Drawing.Color]::FromArgb(255, 43, 182, 234),   # #2bb6ea
     45.0
   )
   $g.FillRectangle($grad, $rect)
 
-  # Haltère centrale (symbole)
-  $strokeH = [math]::Max(2, [int]($Size * 0.09))
-  $plateW = [int]($Size * 0.18)
-  $plateH = [int]($Size * 0.30)
-  $barW = [int]($Size * 0.62)
-  $barH = [int]($Size * 0.085)
+  # Monogramme "FT" centré
+  $fontSize = if ($Maskable) { $Size * 0.28 } else { $Size * 0.34 }
+  $font = [System.Drawing.Font]::new(
+    "Segoe UI",
+    $fontSize,
+    [System.Drawing.FontStyle]::Bold,
+    [System.Drawing.GraphicsUnit]::Pixel
+  )
+  $fmt = [System.Drawing.StringFormat]::new()
+  $fmt.Alignment = [System.Drawing.StringAlignment]::Center
+  $fmt.LineAlignment = [System.Drawing.StringAlignment]::Center
 
-  $cx = $Size / 2
-  $cy = $Size / 2
+  $white = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(235, 255, 255, 255))
+  $textRect = [System.Drawing.RectangleF]::new(0, 0, $Size, $Size)
+  $g.DrawString("FT", $font, $white, $textRect, $fmt)
 
-  $white = [System.Drawing.Brushes]::White
-
-  if ($Maskable) {
-    # zone de sécurité maskable : contenu dans les 80% centraux
-    $scale = 0.80
-  } else {
-    $scale = 1.0
-  }
-  $sw = [int]($strokeH * $scale)
-  $pw = [int]($plateW * $scale)
-  $ph = [int]($plateH * $scale)
-  $bw = [int]($barW * $scale)
-  $bh = [int]($barH * $scale)
-
-  $barX = $cx - $bw / 2
-  $barY = $cy - $bh / 2
-  $g.FillRectangle($white, $barX, $barY, $bw, $bh)
-
-  $plateY = $cy - $ph / 2
-  $plateRadius = [int]($pw * 0.28)
-  # plateau gauche
-  $g.FillRectangle($white, $barX, $plateY, $pw, $ph)
-  # plateau droit
-  $g.FillRectangle($white, $barX + $bw - $pw, $plateY, $pw, $ph)
-
+  $fmt.Dispose()
+  $font.Dispose()
+  $white.Dispose()
+  $grad.Dispose()
   $g.Dispose()
   $bmp.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
   $bmp.Dispose()
