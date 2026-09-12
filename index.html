@@ -3,9 +3,19 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Suivi de mensurations fitness : poids, poitrine, bras, cuisses… Stocké localement, 100% hors ligne.">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FitTracker">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png">
   <title>FitTracker 💪</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script defer src="vendor/chart.umd.min.js"></script>
   <style>
     *,
     *::before,
@@ -35,14 +45,15 @@
       color: var(--text);
       font-family: 'Segoe UI', system-ui, sans-serif;
       min-height: 100vh;
-      padding-bottom: 48px;
+      padding-bottom: calc(48px + env(safe-area-inset-bottom));
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* HEADER */
     .header {
       background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
       border-bottom: 1px solid var(--border);
-      padding: 20px 20px 0;
+      padding: calc(20px + env(safe-area-inset-top)) 20px 0;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -154,7 +165,7 @@
       color: var(--text);
       border-radius: 8px;
       padding: 8px 12px;
-      font-size: 0.9em;
+      font-size: 16px;
       font-family: inherit;
       outline: none;
       transition: border-color 0.15s;
@@ -209,7 +220,7 @@
       background: transparent;
       border: none;
       color: var(--text);
-      font-size: 1.05em;
+      font-size: 16px;
       font-weight: 600;
       outline: none;
       font-family: inherit;
@@ -313,6 +324,14 @@
     .btn-cancel {
       background: var(--border2);
       color: var(--text);
+    }
+
+    .btn-primary:active,
+    .btn-goal:active,
+    .btn-sm:active,
+    .chip:active,
+    .tab-btn:active {
+      opacity: 0.6;
     }
 
     /* CHIP SELECTOR */
@@ -942,6 +961,13 @@
     buildGoalsGrid();
     buildChips();
     updateSubtitle();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => console.error('Échec SW:', err));
+      });
+    }
   </script>
 </body>
 
