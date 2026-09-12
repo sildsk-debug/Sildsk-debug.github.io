@@ -33,6 +33,7 @@ let activeTab = 0;
 let chartMetric = 'poids';
 let chartInstance = null;
 let pendingDelete = null;
+let editingId = null;
 
 // ── PERSISTENCE ────────────────────────────────────────
 function load() {
@@ -98,35 +99,150 @@ function buildSaisirGrid() {
 function saveEntry() {
   const date = document.getElementById('input-date').value || today();
   const note = document.getElementById('input-note').value.trim();
-  const entry = { id: Date.now(), date, note };
+  const values = {};
   let hasVal = false;
   MEASUREMENTS.forEach(m => {
     const v = document.getElementById('f-' + m.key).value;
-    if (v !== '') { entry[m.key] = parseFloat(v); hasVal = true; }
+    if (v !== '') { values[m.key] = parseFloat(v); hasVal = true; }
   });
   if (!hasVal) { alert('Entre au moins une mesure !'); return; }
 
-  // Si entrée même date → confirmation
-  const existing = db.entries.findIndex(e => e.date === date);
-  if (existing !== -1) {
-    if (!confirm('Une entrée existe déjà pour cette date. La remplacer ?')) return;
-    db.entries.splice(existing, 1);
+  let msg;
+  if (editingId) {
+    const idx = db.entries.findIndex(e => e.id === editingId);
+    if (idx !== -1) db.entries[idx] = { id: editingId, date, note, ...values };
+    msg = '✅ Mis à jour !';
+    setEditingUI(null);
+  } else {
+    // Si entrée même date → confirmation
+    const existing = db.entries.findIndex(e => e.date === date);
+    if (existing !== -1) {
+      if (!confirm('Une entrée existe déjà pour cette date. La remplacer ?')) return;
+      db.entries.splice(existing, 1);
+    }
+    db.entries.push({ id: Date.now(), date, note, ...values });
+    msg = '✅ Sauvegardé !';
   }
 
-  db.entries.push(entry);
   db.entries.sort((a, b) => b.date.localeCompare(a.date));
   persist();
 
   // Reset form
-  MEASUREMENTS.forEach(m => { document.getElementById('f-' + m.key).value = ''; });
+  MEASUREMENTS.forEach(m => { const el = document.getElementById('f-' + m.key); if (el) el.value = ''; });
   document.getElementById('input-note').value = '';
 
   // Feedback
   const btn = document.getElementById('btn-save');
-  btn.textContent = '✅ Sauvegardé !';
   btn.classList.add('success');
-  setTimeout(() => { btn.textContent = '💾 Enregistrer cette entrée'; btn.classList.remove('success'); }, 2000);
+  btn.textContent = msg;
+  setTimeout(() => {
+    btn.classList.remove('success');
+    btn.textContent = '💾 Enregistrer cette entrée';
+  }, 2000);
+  renderDaySummary();
   updateSubtitle();
+}
+
+function setEditingUI(id) {
+  editingId = id || null;
+  const btn = document.getElementById('btn-save');
+  const cancel = document.getElementById('btn-cancel-edit');
+  if (editingId) {
+    btn.classList.add('editing');
+    btn.textContent = '✏️ Mettre à jour l\u2019entrée';
+    if (cancel) cancel.style.display = '';
+  } else {
+    btn.classList.remove('editing');
+    btn.textContent = '💾 Enregistrer cette entrée';
+    if (cancel) cancel.style.display = 'none';
+  }
+}
+
+function editEntry(id) {
+  const e = db.entries.find(x => x.id === id);
+  if (!e) return;
+  MEASUREMENTS.forEach(m => {
+    const el = document.getElementById('f-' + m.key);
+    if (el) el.value = (e[m.key] !== undefined) ? e[m.key] : '';
+  });
+  document.getElementById('input-date').value = e.date;
+  document.getElementById('input-note').value = e.note || '';
+  switchTab(0);
+  setEditingUI(id);
+}
+
+function cancelEdit() {
+  MEASUREMENTS.forEach(m => { const el = document.getElementById('f-' + m.key); if (el) el.value = ''; });
+  document.getElementById('input-note').value = '';
+  document.getElementById('input-date').value = today();
+  setEditingUI(null);
+}
+
+function repopulateLast() {
+  const sorted = [...db.entries].sort((a, b) => b.date.localeCompare(a.date));
+  const last = sorted[0];
+  if (!last) { alert('Aucune entrée à reprendre pour l\u2019instant.'); return; }
+  MEASUREMENTS.forEach(m => {
+    const el = document.getElementById('f-' + m.key);
+    if (el) el.value = (last[m.key] !== undefined) ? last[m.key] : '';
+  });
+  document.getElementById('input-date').value = last.date;
+  document.getElementById('input-note').value = last.note || '';
+  setEditingUI(null);
+}
+
+function renderDaySummary() {
+  const el = document.getElementById('day-summary');
+  if (!el) return;
+  const sorted = [...db.entries].sort((a, b) => b.date.localeCompare(a.date));
+  const last = sorted[0];
+  if (!last) { el.style.display = 'none'; return; }
+  const prev = sorted.find(e => e.date < last.date) || null;
+  const hasGoal = MEASUREMENTS.some(m => db.goals[m.key] !== undefined);
+
+  const groups = MEASUREMENT_GROUPS.map(g => {
+    const rows = g.keys.map(k => {
+      const m = MEASUREMENTS.find(x => x.key === k);
+      if (last[m.key] === undefined) return '';
+      let delta = '';
+      if (prev && prev[m.key] !== undefined) {
+        const d = +(last[m.key] - prev[m.key]).toFixed(1);
+        if (d !== 0) {
+          const inv = INVERT.includes(k);
+          const up = d > 0;
+          const good = inv ? !up : up;
+          const cls = (up ? 'delta-up' : 'delta-down') + (inv ? ' inv' : '');
+          delta = `<span class="${cls}">${up ? '▲' : '▼'} ${Math.abs(d)}</span>`;
+        }
+      }
+      let goal = '';
+      if (db.goals[k] !== undefined) {
+        const gv = parseFloat(db.goals[k]);
+        const ok = INVERT.includes(k) ? last[m.key] <= gv : last[m.key] >= gv;
+        goal = `<span class="sum-goal ${ok ? 'ok' : 'no'}" title="Objectif ${gv} ${m.unit}">${ok ? '✓' : '✗'}</span>`;
+      }
+      return `<div class="sum-row">
+        <span class="sum-name">${m.label}</span>
+        <span class="sum-val">${last[m.key]}<span class="unit">&nbsp;${m.unit}</span></span>
+        ${delta}${hasGoal ? goal : ''}
+      </div>`;
+    }).filter(Boolean).join('');
+    return `<div class="sum-group">
+      <div class="sum-group-title">${g.icon} ${g.title}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="sum-card">
+      <div class="sum-head">
+        <span class="sum-title">📊 Synthèse</span>
+        <span class="sum-date">${fmtDate(last.date)}${prev ? ` · vs ${fmtDate(prev.date)}` : ''}</span>
+      </div>
+      ${groups}
+      ${last.note ? `<div class="sum-note">${last.note}</div>` : ''}
+    </div>`;
 }
 
 // ── TAB 1: GRAPHIQUES ──────────────────────────────────
@@ -257,7 +373,10 @@ function entryCard(e) {
     <button class="btn-sm btn-del-confirm" onclick="confirmDelete(${e.id})">Supprimer</button>
     <button class="btn-sm btn-cancel" onclick="cancelDelete()">Annuler</button>
    </div>`
-    : `<button class="btn-sm btn-del" onclick="askDelete(${e.id})">🗑</button>`;
+    : `<div class="entry-actions">
+    <button class="btn-sm btn-edit" onclick="editEntry(${e.id})" title="Modifier">✏️</button>
+    <button class="btn-sm btn-del" onclick="askDelete(${e.id})" title="Supprimer">🗑</button>
+   </div>`;
 
   return `<div class="entry-card" id="card-${e.id}">
 <div class="entry-header">
@@ -331,6 +450,7 @@ function importJSON(event) {
       db = d;
       persist();
       buildGoalsGrid();
+      renderDaySummary();
       updateSubtitle();
       alert(`✅ Import réussi ! ${db.entries.length} entrée(s) chargée(s).`);
     } catch { alert('❌ Fichier invalide.'); }
@@ -351,12 +471,80 @@ function exportCSV() {
   URL.revokeObjectURL(a.href);
 }
 
+// ── RAPPEL ─────────────────────────────────────────────
+const REMINDER_KEY = 'fittracker_reminder_v1';
+
+function reminderState() {
+  try { return JSON.parse(localStorage.getItem(REMINDER_KEY)) || null; } catch { return null; }
+}
+
+function syncReminderUI() {
+  const s = reminderState();
+  const on = document.getElementById('btn-reminder-on');
+  const off = document.getElementById('btn-reminder-off');
+  const time = document.getElementById('reminder-time');
+  const freq = document.getElementById('reminder-freq');
+  if (on) on.style.display = (s && s.enabled) ? 'none' : '';
+  if (off) off.style.display = (s && s.enabled) ? '' : 'none';
+  if (time && s) time.value = s.time || '08:00';
+  if (freq && s) freq.value = s.freq || 'daily';
+}
+
+function enableReminder() {
+  const time = document.getElementById('reminder-time').value || '08:00';
+  const freq = document.getElementById('reminder-freq').value || 'daily';
+  const freqLabel = { daily: 'tous les jours', weekly: 'chaque semaine', monthly: 'chaque mois' }[freq];
+  const save = () => {
+    localStorage.setItem(REMINDER_KEY, JSON.stringify({ enabled: true, time, freq }));
+    syncReminderUI();
+    pushReminder();
+    alert(`✅ Rappel activé à ${time} (${freqLabel}).`);
+  };
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') save();
+      else alert('❌ Notifications refusées. Active-les dans les réglages du navigateur.');
+    });
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    save();
+  } else if ('Notification' in window && Notification.permission === 'denied') {
+    alert('❌ Notifications bloquées par le navigateur.');
+  } else {
+    save();
+  }
+}
+
+function disableReminder() {
+  localStorage.removeItem(REMINDER_KEY);
+  syncReminderUI();
+  cancelPush();
+}
+
+function pushReminder() {
+  if (!('serviceWorker' in navigator)) return;
+  const s = reminderState();
+  if (!s || !s.enabled) return;
+  navigator.serviceWorker.ready.then(reg => {
+    if (reg.active) reg.active.postMessage({ type: 'setReminder', time: s.time, freq: s.freq });
+  });
+}
+
+function cancelPush() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg => {
+    if (reg.active) reg.active.postMessage({ type: 'clearReminder' });
+  });
+}
+
 // ── INIT ───────────────────────────────────────────────
 document.getElementById('input-date').value = today();
 buildSaisirGrid();
 buildGoalsGrid();
 buildChips();
 updateSubtitle();
+renderDaySummary();
+syncReminderUI();
+pushReminder();
 
 
 // ── SERVICE WORKER ─────────────────────────────────────────

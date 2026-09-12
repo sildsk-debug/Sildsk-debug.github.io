@@ -51,8 +51,13 @@
           <input type="text" id="input-note" placeholder="Ex: Prise de masse semaine 3…">
         </div>
       </div>
+      <div id="day-summary"></div>
+      <div class="quickbar">
+        <button class="btn-sm btn-ghost" onclick="repopulateLast()">↩️ Reprendre la dernière</button>
+      </div>
       <div id="grid-saisir"></div>
       <button class="btn-primary" id="btn-save" onclick="saveEntry()">💾 Enregistrer cette entrée</button>
+      <button class="btn-sm btn-cancel-edit" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none">✕ Annuler l'édition</button>
     </div>
 
     <!-- TAB 1: GRAPHIQUES -->
@@ -76,6 +81,29 @@
       </p>
       <div id="grid-goals"></div>
       <button class="btn-goal" id="btn-save-goals" onclick="saveGoals()">🎯 Sauvegarder les objectifs</button>
+
+      <div class="export-box" style="margin-top:24px">
+        <div class="export-title">🔔 Rappel</div>
+        <p class="hint" style="margin-bottom:12px">Reçois une notification pour ne pas oublier ta mesure.</p>
+        <div class="form-row" style="align-items:flex-end;margin-bottom:0">
+          <div class="form-group" style="flex:0 1 130px">
+            <label>Heure</label>
+            <input type="time" id="reminder-time" value="08:00">
+          </div>
+          <div class="form-group" style="flex:1;min-width:150px">
+            <label>Fréquence</label>
+            <select id="reminder-freq">
+              <option value="daily">Tous les jours</option>
+              <option value="weekly">Chaque semaine</option>
+              <option value="monthly">Chaque mois</option>
+            </select>
+          </div>
+          <div class="export-btns" style="padding-bottom:3px">
+            <button class="btn-sm btn-export" id="btn-reminder-on" onclick="enableReminder()">Activer</button>
+            <button class="btn-sm btn-cancel" id="btn-reminder-off" onclick="disableReminder()" style="display:none">Désactiver</button>
+          </div>
+        </div>
+      </div>
 
       <div class="export-box">
         <div class="export-title">📤 Export / Import</div>

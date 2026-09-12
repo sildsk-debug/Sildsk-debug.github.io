@@ -1,4 +1,7 @@
-const CACHE = 'fittracker-v3';
+const CACHE = 'fittracker-v4';
+
+const REMINDER_OFFSET_DAYS = { daily: 1, weekly: 7, monthly: 30 };
+let reminderTimer = null;
 
 const PRECACHE = [
   './',
@@ -26,6 +29,57 @@ self.addEventListener('activate', event => {
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
+  );
+});
+
+// ── RAPPEL ─────────────────────────────────────────────
+self.addEventListener('message', event => {
+  const data = event.data || {};
+  if (data.type === 'setReminder') {
+    armReminder(data.time || '08:00', data.freq || 'daily');
+  } else if (data.type === 'clearReminder') {
+    clearReminderTimer();
+  }
+});
+
+function clearReminderTimer() {
+  if (reminderTimer) { clearTimeout(reminderTimer); reminderTimer = null; }
+}
+
+function armReminder(time, freq) {
+  clearReminderTimer();
+  const offset = REMINDER_OFFSET_DAYS[freq] || 1;
+  const [h, m] = time.split(':').map(Number);
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(h, m || 0, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + offset);
+
+  const delay = target.getTime() - now.getTime();
+  reminderTimer = setTimeout(() => {
+    const label = freq === 'weekly' ? 'Cette semaine'
+      : freq === 'monthly' ? 'Ce mois-ci'
+      : 'Aujourd\u2019hui';
+    self.registration.showNotification('FitTracker', {
+      body: `${label}, pense à noter tes mensurations 💪`,
+      icon: './assets/icons/icon-192.png',
+      badge: './assets/icons/icon-192.png',
+      tag: 'fittracker-reminder',
+      renotify: true
+    });
+    armReminder(time, freq);
+  }, delay);
+}
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if ('focus' in c) { c.focus(); return; }
+      }
+      return self.clients.openWindow('./');
+    })
   );
 });
 
