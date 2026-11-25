@@ -7,8 +7,10 @@ Application web de suivi de mensurations fitness — 100% côté client, conçue
 - 📋 **Saisie** quotidienne des mesures : poids, poitrine, taille, bras, cuisses, mollets, cou…
 - 📊 **Graphiques** interactifs (Chart.js) avec objectif et écarts affichés
 - 🎯 **Objectifs** par métrique, matérialisés sur les courbes
-- 📅 **Historique** complet avec suppression
-- ⬇️ **Export / import** des données en JSON, export CSV
+- 📅 **Historique** complet, filtrable par date/note et regroupé par mois, avec suppression
+- ⬇️ **Export / import** des données en JSON (import confirmé et validé), export CSV compatible Excel FR
+- ♿ **Interface accessible** : navigation clavier des onglets, champs étiquetés, cibles tactiles élargies
+- 💬 **Retours non bloquants** (toasts) au lieu de fenêtres `alert`/`confirm`
 
 ## Une PWA installable
 

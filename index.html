@@ -29,69 +29,70 @@
         <div class="subtitle" id="subtitle">0 entrée · stockage local</div>
       </div>
     </div>
-    <div class="tabs" id="top-tabs">
-      <button class="tab-btn active" onclick="switchTab(0)">📋 Saisir</button>
-      <button class="tab-btn" onclick="switchTab(1)">📊 Graphiques</button>
-      <button class="tab-btn" onclick="switchTab(2)">🎯 Objectifs</button>
-      <button class="tab-btn" onclick="switchTab(3)">📅 Historique</button>
+    <div class="tabs" id="top-tabs" role="tablist" aria-label="Navigation">
+      <button type="button" class="tab-btn active" id="tab-top-0" data-tab="0" role="tab" aria-selected="true" aria-controls="panel-0" tabindex="0" onclick="switchTab(0)">📋 Saisir</button>
+      <button type="button" class="tab-btn" id="tab-top-1" data-tab="1" role="tab" aria-selected="false" aria-controls="panel-1" tabindex="-1" onclick="switchTab(1)">📊 Graphiques</button>
+      <button type="button" class="tab-btn" id="tab-top-2" data-tab="2" role="tab" aria-selected="false" aria-controls="panel-2" tabindex="-1" onclick="switchTab(2)">🎯 Objectifs</button>
+      <button type="button" class="tab-btn" id="tab-top-3" data-tab="3" role="tab" aria-selected="false" aria-controls="panel-3" tabindex="-1" onclick="switchTab(3)">📅 Historique</button>
     </div>
   </div>
 
-  <div class="main">
+  <main class="main">
 
     <!-- TAB 0: SAISIR -->
-    <div class="panel active" id="panel-0">
+    <section class="panel active" id="panel-0" role="tabpanel" aria-labelledby="tab-top-0">
       <div class="form-row">
         <div class="form-group" style="flex:1;min-width:130px">
-          <label>Date</label>
+          <label for="input-date">Date</label>
           <input type="date" id="input-date">
         </div>
         <div class="form-group" style="flex:2;min-width:180px">
-          <label>Note (optionnel)</label>
-          <input type="text" id="input-note" placeholder="Ex: Prise de masse semaine 3…">
+          <label for="input-note">Note (optionnel)</label>
+          <input type="text" id="input-note" maxlength="200" placeholder="Ex: Prise de masse semaine 3…">
         </div>
       </div>
       <div id="day-summary"></div>
       <div class="quickbar">
-        <button class="btn-sm btn-ghost" onclick="repopulateLast()">↩️ Reprendre la dernière</button>
+        <button type="button" class="btn-sm btn-ghost" onclick="repopulateLast()">↩️ Reprendre la dernière</button>
       </div>
       <div id="grid-saisir"></div>
-      <button class="btn-primary" id="btn-save" onclick="saveEntry()">💾 Enregistrer cette entrée</button>
-      <button class="btn-sm btn-cancel-edit" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none">✕ Annuler l'édition</button>
-    </div>
+      <button type="button" class="btn-primary" id="btn-save" onclick="saveEntry()">💾 Enregistrer cette entrée</button>
+      <button type="button" class="btn-sm btn-cancel-edit" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none">✕ Annuler l'édition</button>
+    </section>
 
     <!-- TAB 1: GRAPHIQUES -->
-    <div class="panel" id="panel-1">
-      <div class="chips" id="chips-metrics"></div>
+    <section class="panel" id="panel-1" role="tabpanel" aria-labelledby="tab-top-1">
+      <div class="chips" id="chips-metrics" role="group" aria-label="Choisir une métrique"></div>
       <div class="pills" id="stat-pills"></div>
       <div class="chart-box" id="chart-box">
         <div class="chart-title" id="chart-title"></div>
-        <div class="chart-wrap"><canvas id="myChart"></canvas></div>
+        <div class="chart-wrap"><canvas id="myChart" role="img" aria-label="Courbe d'évolution de la métrique sélectionnée"></canvas></div>
       </div>
       <div class="empty" id="chart-empty" style="display:none">
         <div class="empty-icon">📈</div>
         <p id="chart-empty-msg">Aucune donnée pour cette métrique</p>
+        <button type="button" class="btn-sm btn-ghost" onclick="switchTab(0)">📋 Saisir une mesure</button>
       </div>
-    </div>
+    </section>
 
     <!-- TAB 2: OBJECTIFS -->
-    <div class="panel" id="panel-2">
+    <section class="panel" id="panel-2" role="tabpanel" aria-labelledby="tab-top-2">
       <p class="hint">
         Définis tes objectifs — ils apparaîtront dans les graphiques pour visualiser ta progression.
       </p>
       <div id="grid-goals"></div>
-      <button class="btn-goal" id="btn-save-goals" onclick="saveGoals()">🎯 Sauvegarder les objectifs</button>
+      <button type="button" class="btn-goal" id="btn-save-goals" onclick="saveGoals()">🎯 Sauvegarder les objectifs</button>
 
       <div class="export-box" style="margin-top:24px">
         <div class="export-title">🔔 Rappel</div>
         <p class="hint" style="margin-bottom:12px">Reçois une notification pour ne pas oublier ta mesure.</p>
         <div class="form-row" style="align-items:flex-end;margin-bottom:0">
           <div class="form-group" style="flex:0 1 130px">
-            <label>Heure</label>
+            <label for="reminder-time">Heure</label>
             <input type="time" id="reminder-time" value="08:00">
           </div>
           <div class="form-group" style="flex:1;min-width:150px">
-            <label>Fréquence</label>
+            <label for="reminder-freq">Fréquence</label>
             <select id="reminder-freq">
               <option value="daily">Tous les jours</option>
               <option value="weekly">Chaque semaine</option>
@@ -99,8 +100,8 @@
             </select>
           </div>
           <div class="export-btns" style="padding-bottom:3px">
-            <button class="btn-sm btn-export" id="btn-reminder-on" onclick="enableReminder()">Activer</button>
-            <button class="btn-sm btn-cancel" id="btn-reminder-off" onclick="disableReminder()" style="display:none">Désactiver</button>
+            <button type="button" class="btn-sm btn-export" id="btn-reminder-on" onclick="enableReminder()">Activer</button>
+            <button type="button" class="btn-sm btn-cancel" id="btn-reminder-off" onclick="disableReminder()" style="display:none">Désactiver</button>
           </div>
         </div>
       </div>
@@ -108,28 +109,41 @@
       <div class="export-box">
         <div class="export-title">📤 Export / Import</div>
         <div class="export-btns">
-          <button class="btn-sm btn-export" onclick="exportJSON()">⬇️ Exporter JSON</button>
-          <label class="btn-sm btn-import file-label" style="padding:8px 14px;cursor:pointer">
-            ⬆️ Importer JSON
-            <input type="file" accept=".json" onchange="importJSON(event)">
-          </label>
-          <button class="btn-sm btn-csv" onclick="exportCSV()">📊 Exporter CSV</button>
+          <button type="button" class="btn-sm btn-export" onclick="exportJSON()">⬇️ Exporter JSON</button>
+          <label class="btn-sm btn-import file-label" for="import-file">⬆️ Importer JSON</label>
+          <input type="file" id="import-file" class="sr-only" accept=".json,application/json" onchange="importJSON(event)">
+          <button type="button" class="btn-sm btn-csv" onclick="exportCSV()">📊 Exporter CSV</button>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- TAB 3: HISTORIQUE -->
-    <div class="panel" id="panel-3">
+    <section class="panel" id="panel-3" role="tabpanel" aria-labelledby="tab-top-3">
+      <div class="history-tools">
+        <input type="search" id="history-search" class="search-input" placeholder="Rechercher une date ou une note…" aria-label="Rechercher dans l'historique">
+        <span class="history-count" id="history-count" aria-live="polite"></span>
+      </div>
       <div id="history-list"></div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <nav class="tabbar" aria-label="Navigation principale">
-    <button class="tab-btn active" onclick="switchTab(0)"><span class="tbi">📋</span><span class="tbl">Saisir</span></button>
-    <button class="tab-btn" onclick="switchTab(1)"><span class="tbi">📊</span><span class="tbl">Graphiques</span></button>
-    <button class="tab-btn" onclick="switchTab(2)"><span class="tbi">🎯</span><span class="tbl">Objectifs</span></button>
-    <button class="tab-btn" onclick="switchTab(3)"><span class="tbi">📅</span><span class="tbl">Historique</span></button>
+  <nav class="tabbar" role="tablist" aria-label="Navigation principale">
+    <button type="button" class="tab-btn active" id="tab-bottom-0" data-tab="0" role="tab" aria-selected="true" aria-controls="panel-0" tabindex="0"><span class="tbi">📋</span><span class="tbl">Saisir</span></button>
+    <button type="button" class="tab-btn" id="tab-bottom-1" data-tab="1" role="tab" aria-selected="false" aria-controls="panel-1" tabindex="-1"><span class="tbi">📊</span><span class="tbl">Graphiques</span></button>
+    <button type="button" class="tab-btn" id="tab-bottom-2" data-tab="2" role="tab" aria-selected="false" aria-controls="panel-2" tabindex="-1"><span class="tbi">🎯</span><span class="tbl">Objectifs</span></button>
+    <button type="button" class="tab-btn" id="tab-bottom-3" data-tab="3" role="tab" aria-selected="false" aria-controls="panel-3" tabindex="-1"><span class="tbi">📅</span><span class="tbl">Historique</span></button>
   </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Confirmation</h2>
+    <p id="confirm-msg"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn-sm btn-cancel" id="dialog-cancel">Annuler</button>
+      <button type="button" class="btn-sm btn-confirm" id="dialog-ok">Confirmer</button>
+    </div>
+  </dialog>
 
   <script src="assets/js/app.js"></script>
 </body>
